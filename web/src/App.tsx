@@ -41,15 +41,21 @@ export default function App() {
       <main>
         <div className="sidebar">
           <SearchForm loading={loading} onSubmit={handleSubmit} />
-          <HistoryList history={history} onSelect={setCurrent} />
+          <HistoryList history={history} selectedId={current?.id} onSelect={setCurrent} />
         </div>
-        <div className="content">
-          {error && <div className="error-banner">{error}</div>}
+        <div className="content" aria-live="polite">
+          {error && (
+            <div className="error-banner" role="alert">
+              {error}
+            </div>
+          )}
           {current ? (
             <ResultsView record={current} />
           ) : (
             <p className="empty-state">
-              Preencha o perfil ao lado e clique em "Buscar cliente" para iniciar.
+              {loading
+                ? "Buscando cliente nas fontes configuradas..."
+                : 'Preencha o perfil ao lado e clique em "Buscar cliente" para iniciar.'}
             </p>
           )}
         </div>

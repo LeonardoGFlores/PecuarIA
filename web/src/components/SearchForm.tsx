@@ -33,7 +33,7 @@ export function SearchForm({ loading, onSubmit }: Props) {
   }
 
   return (
-    <form className="search-form" onSubmit={handleSubmit}>
+    <form className="search-form" onSubmit={handleSubmit} aria-busy={loading}>
       <h2>Definir perfil do cliente</h2>
       <div className="field">
         <label htmlFor="name">Nome / Razão social *</label>
@@ -105,6 +105,7 @@ export function SearchForm({ loading, onSubmit }: Props) {
         />
       </div>
       <button type="submit" disabled={loading}>
+        {loading && <span className="spinner" aria-hidden="true" />}
         {loading ? "Buscando..." : "Buscar cliente"}
       </button>
     </form>

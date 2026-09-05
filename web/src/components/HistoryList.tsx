@@ -2,18 +2,23 @@ import type { SearchRecord } from "../types";
 
 interface Props {
   history: SearchRecord[];
+  selectedId?: number;
   onSelect: (record: SearchRecord) => void;
 }
 
-export function HistoryList({ history, onSelect }: Props) {
+export function HistoryList({ history, selectedId, onSelect }: Props) {
   if (history.length === 0) return null;
   return (
-    <div className="history-list">
+    <nav className="history-list" aria-label="Buscas recentes">
       <h3>Buscas recentes</h3>
       <ul>
         {history.map((record) => (
           <li key={record.id}>
-            <button onClick={() => onSelect(record)}>
+            <button
+              onClick={() => onSelect(record)}
+              aria-current={record.id === selectedId ? "true" : undefined}
+              className={record.id === selectedId ? "history-item-active" : undefined}
+            >
               {record.criteria.name}{" "}
               <span className="history-date">
                 {new Date(record.createdAt).toLocaleString("pt-BR")}
@@ -22,6 +27,6 @@ export function HistoryList({ history, onSelect }: Props) {
           </li>
         ))}
       </ul>
-    </div>
+    </nav>
   );
 }
