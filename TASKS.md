@@ -1,0 +1,30 @@
+# TASKS — PecuarIA (v1 / P0)
+
+Tarefas atômicas para implementar o escopo P0 definido em `SPEC.md`. Cada
+tarefa deve ser executável de forma independente uma vez satisfeitas as
+suas dependências.
+
+- [ ] [SETUP-01] Inicializar projeto Next.js (TypeScript, App Router) com Tailwind e shadcn/ui (depende de: nenhuma)
+- [ ] [SETUP-02] Criar projeto Supabase e configurar variáveis de ambiente (URL, anon key, service role key) (depende de: nenhuma)
+- [ ] [DOM-01] Definir modelo de domínio em TypeScript (Species, ProductionSystem, ScenarioInput, CostItem, ZootechnicalParams, FinancialResult) (depende de: nenhuma)
+- [ ] [DB-01] Modelar schema Postgres (farms, scenarios, cost_items, market_prices, species, production_systems) (depende de: SETUP-02, DOM-01)
+- [ ] [DB-02] Configurar Row Level Security multi-tenant por farm (depende de: DB-01)
+- [ ] [AUTH-01] Implementar fluxo de cadastro/login/logout com Supabase Auth (depende de: SETUP-01, SETUP-02)
+- [ ] [AUTH-02] Onboarding: vincular usuário autenticado a uma farm no primeiro login (depende de: AUTH-01, DB-01)
+- [ ] [CALC-01] Implementar motor de cálculo de custos operacionais (fixos e variáveis) (depende de: DOM-01)
+- [ ] [CALC-02] Implementar motor de cálculo zootécnico para bovino de corte (GMD, conversão alimentar, mortalidade, duração de ciclo) (depende de: DOM-01)
+- [ ] [CALC-03] Implementar motor de cálculo zootécnico para leite (produção diária, conversão, descarte) (depende de: DOM-01)
+- [ ] [CALC-04] Implementar cálculo de receita e indicadores financeiros (receita bruta, CAPEX, fluxo de caixa, payback) (depende de: CALC-01, CALC-02, CALC-03)
+- [ ] [CALC-05] Implementar análise de sensibilidade (variação de premissas-chave e cenários otimista/realista/pessimista) (depende de: CALC-04)
+- [ ] [CALC-06] Escrever testes unitários do motor de cálculo com casos de referência validados manualmente (depende de: CALC-04, CALC-05)
+- [ ] [MKT-01] Pesquisar fonte de dados de preços (CEPEA) e desenhar estratégia de scraping/parsing (depende de: nenhuma)
+- [ ] [MKT-02] Implementar Supabase Edge Function de scraping de preços (arroba boi, leite, milho) gravando em market_prices (depende de: MKT-01, DB-01)
+- [ ] [MKT-03] Agendar execução periódica da Edge Function via pg_cron (depende de: MKT-02)
+- [ ] [MKT-04] Implementar fallback de edição manual de preços na UI quando não houver dado atualizado (depende de: MKT-02, UI-01)
+- [ ] [UI-01] Construir formulário de criação/edição de cenário (custos, zootecnia, sistema de produção, espécie) (depende de: DOM-01, AUTH-02)
+- [ ] [UI-02] Implementar CRUD de cenários persistido no Supabase (criar, editar, duplicar, excluir) (depende de: UI-01, DB-01, DB-02)
+- [ ] [UI-03] Construir tela de listagem de cenários salvos por farm (depende de: UI-02)
+- [ ] [UI-04] Construir tela de comparação lado a lado (tabela com N cenários selecionados) (depende de: CALC-04, UI-03)
+- [ ] [UI-05] Construir dashboard com gráficos (Recharts) para comparação entre cenários e sensibilidade (depende de: CALC-05, UI-04)
+- [ ] [DEPLOY-01] Deploy do frontend no Vercel conectado ao Supabase de produção (depende de: SETUP-01, SETUP-02)
+- [ ] [DEPLOY-02] Configurar domínio e variáveis de ambiente de produção (depende de: DEPLOY-01)
