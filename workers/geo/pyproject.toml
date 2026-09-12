@@ -1,0 +1,31 @@
+[project]
+name = "pecuaria-worker-geo"
+version = "0.1.0"
+description = "Worker de processamento geoespacial da PecuarIA (Celery). Fase 1: apenas skeleton; ndvi/evi/masks chegam na Fase 3 (docs/specs/02)."
+requires-python = ">=3.11"
+dependencies = [
+    "celery[redis]>=5.4,<6.0",
+    "pydantic-settings>=2.3,<3.0",
+]
+
+[project.optional-dependencies]
+# Dependencias de processamento geoespacial (Fase 3): nao instaladas ainda
+# porque nao ha codigo em app/processing/ que as use.
+geo = [
+    "rasterio>=1.3,<2.0",
+    "rioxarray>=0.15,<1.0",
+    "shapely>=2.0,<3.0",
+    "geopandas>=0.14,<1.0",
+    "numpy>=1.26,<2.0",
+    "pandas>=2.2,<3.0",
+]
+dev = [
+    "pytest>=8.0,<9.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
