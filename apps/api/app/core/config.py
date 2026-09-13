@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://pecuaria:pecuaria@localhost:5432/pecuaria"
     api_port: int = 8000
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
+    celery_broker_url: str = "redis://localhost:6379/0"
 
 
 @lru_cache

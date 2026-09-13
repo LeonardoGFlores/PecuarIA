@@ -3,12 +3,12 @@ import uuid
 from datetime import datetime
 
 from geoalchemy2 import Geometry
-from sqlalchemy import DateTime, Enum, Float, ForeignKey, Numeric, String
+from sqlalchemy import DateTime, Enum, Float, ForeignKey, Numeric, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import ARRAY, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
-from app.models.mixins import UUIDPrimaryKeyMixin
+from app.models.mixins import StatusEvidencia, UUIDPrimaryKeyMixin
 
 
 class FonteEstacao(str, enum.Enum):
@@ -35,6 +35,12 @@ class PapelRepresentatividade(str, enum.Enum):
     AUXILIAR = "auxiliar"
 
 
+class NivelCriterioRepresentatividade(str, enum.Enum):
+    BOM = "bom"
+    REGULAR = "regular"
+    INSUFICIENTE = "insuficiente"
+
+
 class EstacaoMeteorologica(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "estacao_meteorologica"
 
@@ -56,6 +62,9 @@ class EstacaoMeteorologica(UUIDPrimaryKeyMixin, Base):
 
 class ObservacaoMeteorologica(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "observacao_meteorologica"
+    __table_args__ = (
+        UniqueConstraint("estacao_id", "variavel", "timestamp", name="uq_observacao_estacao_variavel_timestamp"),
+    )
 
     estacao_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("estacao_meteorologica.id", ondelete="CASCADE"), nullable=False
@@ -67,12 +76,24 @@ class ObservacaoMeteorologica(UUIDPrimaryKeyMixin, Base):
     valor: Mapped[float] = mapped_column(Float, nullable=False)
     unidade: Mapped[str] = mapped_column(String(30), nullable=False)
     flag_qualidade: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    status: Mapped[StatusEvidencia] = mapped_column(
+        Enum(StatusEvidencia, name="status_evidencia"),
+        nullable=False,
+        # server_default usa o NOME do membro (maiusculo) porque e assim que
+        # o tipo enum status_evidencia foi criado no Postgres na Fase 1
+        # (SQLAlchemy usa Enum.name como label da coluna, nao Enum.value).
+        server_default=StatusEvidencia.OBSERVADO.name,
+    )
+    versao_processamento: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
     estacao: Mapped["EstacaoMeteorologica"] = relationship(back_populates="observacoes")
 
 
 class AvaliacaoRepresentatividade(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "avaliacao_representatividade"
+    __table_args__ = (
+        UniqueConstraint("fazenda_id", "estacao_id", "variavel", name="uq_avaliacao_fazenda_estacao_variavel"),
+    )
 
     fazenda_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("fazenda.id", ondelete="CASCADE"), nullable=False
@@ -84,9 +105,19 @@ class AvaliacaoRepresentatividade(UUIDPrimaryKeyMixin, Base):
         Enum(VariavelMeteorologica, name="variavel_meteorologica"), nullable=False
     )
     distancia_km: Mapped[float] = mapped_column(Numeric(8, 2), nullable=False)
-    criterio_completude: Mapped[str | None] = mapped_column(String(30), nullable=True)
-    criterio_atualizacao: Mapped[str | None] = mapped_column(String(30), nullable=True)
-    criterio_consistencia: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    criterio_completude: Mapped[NivelCriterioRepresentatividade] = mapped_column(
+        Enum(NivelCriterioRepresentatividade, name="nivel_criterio_representatividade"), nullable=False
+    )
+    criterio_atualizacao: Mapped[NivelCriterioRepresentatividade] = mapped_column(
+        Enum(NivelCriterioRepresentatividade, name="nivel_criterio_representatividade"), nullable=False
+    )
+    criterio_consistencia: Mapped[NivelCriterioRepresentatividade] = mapped_column(
+        Enum(NivelCriterioRepresentatividade, name="nivel_criterio_representatividade"), nullable=False
+    )
     papel: Mapped[PapelRepresentatividade] = mapped_column(
         Enum(PapelRepresentatividade, name="papel_representatividade"), nullable=False
     )
+    calculado_em: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    versao_algoritmo: Mapped[str | None] = mapped_column(String(50), nullable=True)
