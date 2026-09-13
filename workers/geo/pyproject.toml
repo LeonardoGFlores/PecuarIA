@@ -9,21 +9,16 @@ dependencies = [
     "sqlalchemy>=2.0,<3.0",
     "psycopg[binary]>=3.1,<4.0",
     "httpx>=0.27,<1.0",
+    "rasterio>=1.3,<2.0",
+    "shapely>=2.0,<3.0",
+    "numpy>=1.26,<2.0",
+    "boto3>=1.34,<2.0",
 ]
 
 [project.optional-dependencies]
-# Dependencias de processamento geoespacial (Fase 3): nao instaladas ainda
-# porque nao ha codigo em app/processing/ que as use.
-geo = [
-    "rasterio>=1.3,<2.0",
-    "rioxarray>=0.15,<1.0",
-    "shapely>=2.0,<3.0",
-    "geopandas>=0.14,<1.0",
-    "numpy>=1.26,<2.0",
-    "pandas>=2.2,<3.0",
-]
 dev = [
     "pytest>=8.0,<9.0",
+    "moto[s3,server]>=5.0,<6.0",
 ]
 
 [build-system]

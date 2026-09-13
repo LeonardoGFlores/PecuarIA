@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
-from app.routes import fontes, health, meteorologia, territorio
+from app.routes import fontes, health, meteorologia, territorio, vegetacao
 
 app = FastAPI(
     title="PecuarIA API",
@@ -22,3 +22,4 @@ app.include_router(health.router)
 app.include_router(territorio.router)
 app.include_router(fontes.router)
 app.include_router(meteorologia.router)
+app.include_router(vegetacao.router)

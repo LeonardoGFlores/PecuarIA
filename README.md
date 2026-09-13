@@ -12,11 +12,11 @@ produto e a arquitetura estão em [`docs/specs/`](docs/specs/):
 - [`02-processamento-ndvi-evi.md`](docs/specs/02-processamento-ndvi-evi.md) — pipeline Sentinel-2 L2A.
 - [`03-motor-diagnostico-gargalos.md`](docs/specs/03-motor-diagnostico-gargalos.md) — regras do motor de diagnóstico.
 
-Este repositório cobriu as Fases 1 e 2 do roadmap: cadastro territorial,
-catálogo de fontes e integração meteorológica (INMET + NASA POWER como
-fallback em grade, com avaliação de representatividade por variável). As
-demais fases (NDVI/EVI, diagnóstico, cenários) ainda não têm código — apenas
-a spec que as guia.
+Este repositório cobriu as Fases 1 a 3 do roadmap: cadastro territorial,
+catálogo de fontes, integração meteorológica (INMET + NASA POWER como
+fallback em grade, com avaliação de representatividade por variável) e
+processamento de vegetação (NDVI/EVI via Sentinel-2 L2A). As demais fases
+(diagnóstico, cenários) ainda não têm código — apenas a spec que as guia.
 
 **Nomes de campo da API do INMET não confirmados**: o ambiente onde a Fase 2
 foi implementada bloqueia acesso de rede a `apitempo.inmet.gov.br` e
@@ -25,6 +25,15 @@ exemplo de terceiro, não em chamadas reais. Antes de rodar a ingestão INMET
 contra dados de produção, valide `workers/geo/app/clients/inmet.py`
 (constantes `CAMPO_CATALOGO_*` e `CAMPOS_VARIAVEL_DIARIA`) com uma chamada
 real e ajuste se necessário.
+
+**Nomes de asset e metadados do STAC (Fase 3) não confirmados**: o mesmo
+ambiente bloqueia acesso a `earth-search.aws.element84.com`. Os nomes de
+asset assumidos (`red`, `nir`, `blue`, `scl`, em
+`workers/geo/app/clients/stac.py`) e o fallback de escala/offset por
+baseline de processamento (`workers/geo/app/processing/escala.py`) vêm de
+documentação pública, não de uma chamada real — se algum nome de asset
+divergir, a descoberta falha com um erro claro (nunca substitui por outro
+asset silenciosamente). Valide contra uma chamada real antes de produção.
 
 ## Estrutura
 
@@ -95,6 +104,10 @@ Tasks disponíveis nesta fase:
 | `clima.nasa_power.ingerir_observacoes` | sob demanda | Cria a estação-grade da fazenda (se preciso) e busca a série diária. |
 | `qualidade.despachar_avaliacoes` | semanal (domingo, 04h) | Enfileira `avaliar_fazenda` para todas as fazendas. |
 | `qualidade.avaliar_fazenda` | sob demanda (ou via API) | Avalia representatividade por variável e aciona o fallback NASA POWER se preciso. |
+| `satelite.despachar_descoberta` | diário (07h) | Enfileira `descobrir_cenas` para todas as fazendas. |
+| `satelite.descobrir_cenas` | sob demanda | Busca cenas Sentinel-2 L2A novas (STAC) para uma fazenda; filtra por nuvem e despacha `processar_cena_area` por área intersectada. |
+| `satelite.processar_cena_area` | sob demanda | Recorta, mascara (SCL) e calcula NDVI/EVI de uma cena para uma área produtiva; grava rasters + métricas. |
+| `satelite.despachar_processamento_pendente` | a cada 6h | Rede de segurança: redespacha pares (cena, área) sem `indice_vegetacao_area` ainda. |
 
 O worker acessa o Postgres via SQLAlchemy Core (tabelas refletidas), não via
 os models ORM da API — os dois pacotes definem um módulo `app` de mesmo
@@ -124,6 +137,18 @@ placeholder indica de qual fase depende).
   `qualidade.avaliar_fazenda` no worker (retorna 202; precisa do worker
   rodando para ser processado).
 
+## Endpoints de vegetação (Fase 3)
+
+- `GET /vegetacao/indices?area_produtiva_id=&tipo=&inicio=&fim=` — série de
+  NDVI/EVI de uma área, com o campo derivado `redundante` (`true` quando a
+  cena de origem foi marcada `REDUNDANTE` por outra do mesmo dia cobrindo a
+  mesma parte da área — a linha nunca é apagada, só deixa de ser a leitura
+  principal do dia).
+- `GET /vegetacao/cenas?fazenda_id=&inicio=&fim=` — catálogo de cenas
+  Sentinel-2 que intersectam a fazenda, incluindo rejeitadas (nuvem acima
+  do limiar) e redundantes — nunca apagadas, para a tela de Histórico
+  ambiental poder mostrar lacunas e o porquê.
+
 ## Testes
 
 ```bash
@@ -133,7 +158,10 @@ export DATABASE_URL="postgresql+psycopg://pecuaria:pecuaria@localhost:5432/pecua
 python -m pytest tests/ -v
 ```
 
-Os testes de cliente HTTP (INMET/NASA POWER) usam respostas mockadas, sem
-rede real. Os de ingestão/qualidade rodam contra o Postgres local (pulados
-automaticamente se `DATABASE_URL` não estiver acessível) e limpam os dados
-que criam ao final.
+Os testes de cliente HTTP (INMET/NASA POWER/STAC) usam respostas mockadas,
+sem rede real. Os de ingestão/qualidade/satélite rodam contra o Postgres
+local (pulados automaticamente se `DATABASE_URL` não estiver acessível) e
+limpam os dados que criam ao final. Os de `processing/raster_io.py` e
+`clients/storage.py` usam GeoTIFFs sintéticos e um `moto` local
+(`ThreadedMotoServer`) — nenhum COG real é baixado nem MinIO real é
+necessário para rodar a suíte.

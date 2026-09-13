@@ -67,3 +67,47 @@ def get_com_retry(
 
     assert ultima_excecao is not None
     raise ultima_excecao
+
+
+def post_com_retry(
+    client: httpx.Client,
+    url: str,
+    json: dict,
+    max_tentativas: int = 3,
+) -> httpx.Response:
+    """POST com o mesmo backoff exponencial de `get_com_retry` — usado pela
+    busca STAC (`POST /search`). Rate limit do Earth Search nao e
+    documentado; postura defensiva igual a INMET/NASA POWER, sem numero
+    confirmado seguro."""
+    atraso_segundos = 1.0
+    ultima_excecao: Exception | None = None
+
+    for tentativa in range(max_tentativas + 1):
+        try:
+            resposta = client.post(url, json=json)
+        except httpx.TransportError as exc:
+            ultima_excecao = exc
+            if tentativa < max_tentativas:
+                logger.warning("Falha de transporte ao chamar %s (tentativa %d): %s", url, tentativa + 1, exc)
+                time.sleep(atraso_segundos)
+                atraso_segundos *= 2
+                continue
+            raise
+
+        if resposta.status_code in _RETRYABLE_STATUS and tentativa < max_tentativas:
+            logger.warning(
+                "HTTP %d ao chamar %s (tentativa %d) — nova tentativa em %.0fs",
+                resposta.status_code,
+                url,
+                tentativa + 1,
+                atraso_segundos,
+            )
+            time.sleep(atraso_segundos)
+            atraso_segundos *= 2
+            continue
+
+        resposta.raise_for_status()
+        return resposta
+
+    assert ultima_excecao is not None
+    raise ultima_excecao

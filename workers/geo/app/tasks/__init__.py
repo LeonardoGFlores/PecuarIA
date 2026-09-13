@@ -24,6 +24,10 @@ celery_app.conf.task_routes = {
     "clima.inmet.*": {"queue": "clima_inmet"},
     "clima.nasa_power.*": {"queue": "clima_nasa_power"},
     "qualidade.*": {"queue": "qualidade"},
+    "satelite.descobrir_cenas": {"queue": "satelite_descoberta"},
+    "satelite.despachar_descoberta": {"queue": "satelite_descoberta"},
+    "satelite.processar_cena_area": {"queue": "satelite_processamento"},
+    "satelite.despachar_processamento_pendente": {"queue": "satelite_processamento"},
 }
 
 celery_app.conf.beat_schedule = {
@@ -43,6 +47,14 @@ celery_app.conf.beat_schedule = {
         "task": "qualidade.despachar_avaliacoes",
         "schedule": crontab(day_of_week=0, hour=4, minute=0),
     },
+    "satelite-despachar-descoberta": {
+        "task": "satelite.despachar_descoberta",
+        "schedule": crontab(hour=7, minute=0),
+    },
+    "satelite-despachar-processamento-pendente": {
+        "task": "satelite.despachar_processamento_pendente",
+        "schedule": crontab(minute=0, hour="*/6"),
+    },
 }
 
 
@@ -58,4 +70,5 @@ def health_check() -> dict[str, str]:
 # vira import circular (nasa_power tambem precisa de `celery_app` daqui).
 from app.ingestion import inmet as _inmet_tasks  # noqa: E402,F401
 from app.ingestion import nasa_power as _nasa_power_tasks  # noqa: E402,F401
+from app.ingestion import sentinel2 as _sentinel2_tasks  # noqa: E402,F401
 from app.quality import representatividade as _representatividade_tasks  # noqa: E402,F401
