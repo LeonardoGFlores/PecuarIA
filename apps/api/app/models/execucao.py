@@ -16,6 +16,7 @@ class TipoExecucao(str, enum.Enum):
     DIAGNOSTICO = "diagnostico"
     CENARIO = "cenario"
     AVALIACAO_REPRESENTATIVIDADE = "avaliacao_representatividade"
+    TENDENCIA_VEGETACAO = "tendencia_vegetacao"
 
 
 class StatusExecucao(str, enum.Enum):

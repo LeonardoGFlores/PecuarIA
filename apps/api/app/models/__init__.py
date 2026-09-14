@@ -1,5 +1,6 @@
 """Importa todos os modelos para que `Base.metadata` os conheca (Alembic autogenerate)."""
 
+from app.models.analise_temporal import TendenciaVegetacaoArea
 from app.models.execucao import ExecucaoProcessamento
 from app.models.meteorologia import (
     AvaliacaoRepresentatividade,
@@ -32,4 +33,5 @@ __all__ = [
     "OfertaRegional",
     "PerfilProdutor",
     "PontoInfraestrutura",
+    "TendenciaVegetacaoArea",
 ]

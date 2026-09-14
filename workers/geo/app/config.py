@@ -23,7 +23,6 @@ class Settings(BaseSettings):
     sentinel2_colecao: str = "sentinel-2-l2a"
     sentinel2_limiar_nuvem_cena_pct: float = 90.0
     sentinel2_limiar_cobertura_valida_minima_pct: float = 60.0
-    sentinel2_limiar_gap_dias: int = 15
     sentinel2_backfill_dias: int = 30
 
     storage_endpoint_url: str = "http://localhost:9000"
@@ -32,6 +31,15 @@ class Settings(BaseSettings):
     storage_secret_access_key: str = "pecuaria123"
     storage_region: str = "us-east-1"
     storage_force_path_style: bool = True
+
+    # Analise de tendencia de vegetacao (docs/specs/04) — deteccao de lacunas
+    # nao mora aqui (fica na API, ver apps/api/app/core/config.py), so o
+    # calculo de tendencia persistida, que e responsabilidade do worker.
+    tendencia_janela_dias: int = 90
+    tendencia_amostras_minimas: int = 5
+    tendencia_limiar_variacao_pct: float = 10.0
+    tendencia_janela_sazonal_tolerancia_dias: int = 15
+    tendencia_amostras_minimas_sazonal: int = 3
 
 
 @lru_cache

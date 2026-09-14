@@ -170,6 +170,15 @@ def fazenda_e_area(conn):
     conn.commit()
 
 
+@pytest.fixture(autouse=True)
+def mock_calcular_tendencia_delay():
+    """processar_cena_area despacha calcular_tendencia_area.delay ao final
+    (docs/specs/04) — mock evita vazar mensagens reais para o Redis durante
+    os testes, mesmo padrao ja usado para o fallback NASA POWER na Fase 2."""
+    with patch("app.ingestion.sentinel2.analise_vegetacao.calcular_tendencia_area.delay") as mock_delay:
+        yield mock_delay
+
+
 @pytest.fixture
 def limpar_cena_por_item_stac_id(conn):
     ids_criados: list[str] = []

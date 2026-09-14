@@ -10,13 +10,16 @@ produto e a arquitetura estão em [`docs/specs/`](docs/specs/):
 - [`00-arquitetura-e-stack.md`](docs/specs/00-arquitetura-e-stack.md) — componentes e stack.
 - [`01-contrato-dados-fontes.md`](docs/specs/01-contrato-dados-fontes.md) — modelo de dados das 5 camadas de evidência.
 - [`02-processamento-ndvi-evi.md`](docs/specs/02-processamento-ndvi-evi.md) — pipeline Sentinel-2 L2A.
-- [`03-motor-diagnostico-gargalos.md`](docs/specs/03-motor-diagnostico-gargalos.md) — regras do motor de diagnóstico.
+- [`03-motor-diagnostico-gargalos.md`](docs/specs/03-motor-diagnostico-gargalos.md) — regras do motor de diagnóstico (Fase 6).
+- [`04-analise-temporal.md`](docs/specs/04-analise-temporal.md) — tendência, comparação sazonal e detecção de lacunas.
 
-Este repositório cobriu as Fases 1 a 3 do roadmap: cadastro territorial,
+Este repositório cobriu as Fases 1 a 4 do roadmap: cadastro territorial,
 catálogo de fontes, integração meteorológica (INMET + NASA POWER como
-fallback em grade, com avaliação de representatividade por variável) e
-processamento de vegetação (NDVI/EVI via Sentinel-2 L2A). As demais fases
-(diagnóstico, cenários) ainda não têm código — apenas a spec que as guia.
+fallback em grade, com avaliação de representatividade por variável),
+processamento de vegetação (NDVI/EVI via Sentinel-2 L2A) e análise temporal
+(tendência/sazonalidade de vegetação + detecção de lacunas nas duas
+séries). As demais fases (perfil do produtor/oferta regional, diagnóstico,
+cenários) ainda não têm código além do schema — ver a spec que as guia.
 
 **Nomes de campo da API do INMET não confirmados**: o ambiente onde a Fase 2
 foi implementada bloqueia acesso de rede a `apitempo.inmet.gov.br` e
@@ -108,6 +111,8 @@ Tasks disponíveis nesta fase:
 | `satelite.descobrir_cenas` | sob demanda | Busca cenas Sentinel-2 L2A novas (STAC) para uma fazenda; filtra por nuvem e despacha `processar_cena_area` por área intersectada. |
 | `satelite.processar_cena_area` | sob demanda | Recorta, mascara (SCL) e calcula NDVI/EVI de uma cena para uma área produtiva; grava rasters + métricas. |
 | `satelite.despachar_processamento_pendente` | a cada 6h | Rede de segurança: redespacha pares (cena, área) sem `indice_vegetacao_area` ainda. |
+| `analise_temporal.despachar_tendencias` | semanal (segunda, 06h30) | Enfileira `calcular_tendencia_area` para todo par (área, tipo) — a janela recente desliza no tempo mesmo sem cena nova. |
+| `analise_temporal.calcular_tendencia_area` | sob demanda (encadeada após `processar_cena_area`, ou via API) | Calcula tendência recente + comparação sazonal de NDVI/EVI de uma área e grava o snapshot mais recente. |
 
 O worker acessa o Postgres via SQLAlchemy Core (tabelas refletidas), não via
 os models ORM da API — os dois pacotes definem um módulo `app` de mesmo
@@ -149,6 +154,20 @@ placeholder indica de qual fase depende).
   do limiar) e redundantes — nunca apagadas, para a tela de Histórico
   ambiental poder mostrar lacunas e o porquê.
 
+## Endpoints de análise temporal (Fase 4)
+
+- `GET /vegetacao/tendencia?area_produtiva_id=&tipo=` — snapshot mais
+  recente da tendência (janela móvel) e comparação sazonal de NDVI/EVI de
+  uma área.
+- `POST /vegetacao/tendencia/{area_produtiva_id}/recalcular` — enfileira
+  `analise_temporal.calcular_tendencia_area` para NDVI e EVI (retorna 202).
+- `GET /vegetacao/lacunas?area_produtiva_id=&tipo=&inicio=&fim=` —
+  intervalos sem observação `qualidade=suficiente` acima do limiar
+  configurado (`vegetacao_limiar_gap_dias`), calculados na leitura.
+- `GET /meteorologia/lacunas?estacao_id=|fazenda_id=&variavel=&inicio=&fim=`
+  — mesma detecção de lacunas para a série meteorológica resolvida (limiar
+  `meteorologia_limiar_gap_dias`).
+
 ## Testes
 
 ```bash
@@ -159,9 +178,18 @@ python -m pytest tests/ -v
 ```
 
 Os testes de cliente HTTP (INMET/NASA POWER/STAC) usam respostas mockadas,
-sem rede real. Os de ingestão/qualidade/satélite rodam contra o Postgres
-local (pulados automaticamente se `DATABASE_URL` não estiver acessível) e
-limpam os dados que criam ao final. Os de `processing/raster_io.py` e
-`clients/storage.py` usam GeoTIFFs sintéticos e um `moto` local
-(`ThreadedMotoServer`) — nenhum COG real é baixado nem MinIO real é
-necessário para rodar a suíte.
+sem rede real. Os de ingestão/qualidade/satélite/análise temporal rodam
+contra o Postgres local (pulados automaticamente se `DATABASE_URL` não
+estiver acessível) e limpam os dados que criam ao final. Os de
+`processing/raster_io.py` e `clients/storage.py` usam GeoTIFFs sintéticos e
+um `moto` local (`ThreadedMotoServer`) — nenhum COG real é baixado nem
+MinIO real é necessário para rodar a suíte.
+
+A API também tem sua própria suíte (por enquanto só lógica pura, sem
+banco):
+
+```bash
+cd apps/api
+source .venv/bin/activate
+python -m pytest tests/ -v
+```

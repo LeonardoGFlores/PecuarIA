@@ -5,9 +5,20 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.analise_temporal.lacunas import detectar_lacunas
+from app.core.config import get_settings
 from app.core.db import get_db
+from app.core.tasks import enfileirar
+from app.models.analise_temporal import TendenciaVegetacaoArea
 from app.models.territorio import AreaProdutiva, Fazenda
-from app.models.vegetacao import CenaSatelite, IndiceVegetacaoArea, StatusProcessamentoCena, TipoIndiceVegetacao
+from app.models.vegetacao import (
+    CenaSatelite,
+    IndiceVegetacaoArea,
+    QualidadeIndiceVegetacao,
+    StatusProcessamentoCena,
+    TipoIndiceVegetacao,
+)
+from app.schemas.analise_temporal import LacunaRead, RecalcularTendenciaResponse, TendenciaVegetacaoRead
 from app.schemas.vegetacao import CenaSateliteRead, IndiceVegetacaoRead
 
 router = APIRouter(prefix="/vegetacao", tags=["vegetacao"])
@@ -96,4 +107,69 @@ def listar_cenas(
             status_processamento=cena.status_processamento,
         )
         for cena in cenas
+    ]
+
+
+@router.get("/tendencia", response_model=list[TendenciaVegetacaoRead])
+def listar_tendencias(
+    area_produtiva_id: uuid.UUID,
+    tipo: TipoIndiceVegetacao | None = None,
+    db: Session = Depends(get_db),
+) -> list[TendenciaVegetacaoRead]:
+    if db.get(AreaProdutiva, area_produtiva_id) is None:
+        raise HTTPException(status_code=404, detail="Area produtiva nao encontrada")
+
+    query = select(TendenciaVegetacaoArea).where(TendenciaVegetacaoArea.area_produtiva_id == area_produtiva_id)
+    if tipo is not None:
+        query = query.where(TendenciaVegetacaoArea.tipo == tipo)
+
+    tendencias = db.execute(query).scalars().all()
+    return [TendenciaVegetacaoRead.model_validate(t, from_attributes=True) for t in tendencias]
+
+
+@router.post(
+    "/tendencia/{area_produtiva_id}/recalcular",
+    response_model=RecalcularTendenciaResponse,
+    status_code=202,
+)
+def recalcular_tendencia(area_produtiva_id: uuid.UUID, db: Session = Depends(get_db)) -> RecalcularTendenciaResponse:
+    if db.get(AreaProdutiva, area_produtiva_id) is None:
+        raise HTTPException(status_code=404, detail="Area produtiva nao encontrada")
+
+    for tipo in (TipoIndiceVegetacao.NDVI, TipoIndiceVegetacao.EVI):
+        enfileirar("analise_temporal.calcular_tendencia_area", str(area_produtiva_id), tipo.value)
+    return RecalcularTendenciaResponse(mensagem="Recalculo de tendencia enfileirado")
+
+
+@router.get("/lacunas", response_model=list[LacunaRead])
+def listar_lacunas(
+    area_produtiva_id: uuid.UUID,
+    tipo: TipoIndiceVegetacao,
+    inicio: datetime | None = None,
+    fim: datetime | None = None,
+    db: Session = Depends(get_db),
+) -> list[LacunaRead]:
+    if db.get(AreaProdutiva, area_produtiva_id) is None:
+        raise HTTPException(status_code=404, detail="Area produtiva nao encontrada")
+
+    query = select(IndiceVegetacaoArea.data_aquisicao).where(
+        IndiceVegetacaoArea.area_produtiva_id == area_produtiva_id,
+        IndiceVegetacaoArea.tipo == tipo,
+        IndiceVegetacaoArea.qualidade == QualidadeIndiceVegetacao.SUFICIENTE,
+    )
+    if inicio is not None:
+        query = query.where(IndiceVegetacaoArea.data_aquisicao >= inicio)
+    if fim is not None:
+        query = query.where(IndiceVegetacaoArea.data_aquisicao <= fim)
+
+    datas_validas = [linha.date() for linha in db.execute(query).scalars().all()]
+    fim_referencia = fim.date() if fim is not None else datetime.now().date()
+
+    settings = get_settings()
+    lacunas = detectar_lacunas(
+        datas_validas, limiar_dias=settings.vegetacao_limiar_gap_dias, fim_referencia=fim_referencia
+    )
+    return [
+        LacunaRead(periodo_inicio=lacuna.periodo_inicio, periodo_fim=lacuna.periodo_fim, dias=lacuna.dias)
+        for lacuna in lacunas
     ]

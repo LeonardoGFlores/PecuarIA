@@ -95,9 +95,11 @@ Regras explícitas herdadas da spec de produto:
 |---|---|---|
 | `cena_satelite` | `id`, `fonte` (`SENTINEL2_L2A`), `tile_id`, `data_aquisicao`, `cobertura_nuvem_cena_pct`, `geom` (Polygon, footprint), `status_processamento` (`pendente`\|`processada`\|`rejeitada`) | `data_aquisicao` é a data real de captura pelo satélite, não a data de processamento. |
 | `indice_vegetacao_area` | `id`, `area_produtiva_id`, `cena_id`, `tipo` (`NDVI`\|`EVI`), `data_aquisicao`, `cobertura_valida_pct`, `mediana`, `p10`, `p25`, `p75`, `p90`, `desvio_padrao`, `versao_processamento`, `raster_ref` (path no storage de objetos) | `cobertura_valida_pct` é medida **dentro da área produtiva**, não da cena inteira. Registro só é gravado como `status=derivado` quando cobertura ≥ limiar mínimo (ver doc 02); abaixo disso, o gap fica registrado e não silenciado. |
+| `tendencia_vegetacao_area` | `id`, `area_produtiva_id`, `tipo`, `janela_dias`, `periodo_inicio`, `periodo_fim`, `valor_medio_periodo`, `inclinacao_diaria`, `variacao_pct_periodo`, `classificacao` (`queda`\|`estavel`\|`alta`\|`dados_insuficientes`), `amostras_periodo`, `comparacao_sazonal_disponivel`, `valor_medio_periodo_anterior`, `variacao_sazonal_pct`, `amostras_periodo_anterior`, `calculado_em`, `versao_algoritmo` | Uma linha por `(area_produtiva_id, tipo)`, sempre reescrita (snapshot mais recente, não historizada). Ver doc 04 para o algoritmo de tendência/comparação sazonal. |
 
 Ver doc 02 para o pipeline completo de geração desses registros (máscara de nuvem, escala/
-offset, fórmulas, limiar de cobertura válida, casos de borda).
+offset, fórmulas, limiar de cobertura válida, casos de borda) e doc 04 para a tendência,
+comparação sazonal e detecção de lacunas construídas sobre eles.
 
 ## D. Perfil do produtor e da equipe
 

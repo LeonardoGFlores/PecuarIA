@@ -19,6 +19,7 @@ from shapely.geometry import shape
 from sqlalchemy import select, text, update
 
 from app import db_enums
+from app.analysis import vegetacao as analise_vegetacao
 from app.clients import stac as stac_client
 from app.clients import storage
 from app.config import get_settings
@@ -386,6 +387,12 @@ def processar_cena_area(self, cena_id: str, area_produtiva_id: str) -> dict:
             _reconciliar_redundancia_do_dia(
                 conn, area_uuid, cena.data_aquisicao, cena_uuid, geometria_area, stats_ndvi.cobertura_valida_pct
             )
+
+    # Despacho encadeado (docs/specs/04): mantem a tendencia persistida
+    # maximamente fresca sem esperar o beat semanal — mesmo espirito de
+    # avaliar_fazenda despachando o fallback NASA POWER de dentro de outra task.
+    analise_vegetacao.calcular_tendencia_area.delay(str(area_uuid), db_enums.TIPO_INDICE_NDVI)
+    analise_vegetacao.calcular_tendencia_area.delay(str(area_uuid), db_enums.TIPO_INDICE_EVI)
 
     return {
         "status": "processada",

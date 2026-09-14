@@ -28,6 +28,7 @@ celery_app.conf.task_routes = {
     "satelite.despachar_descoberta": {"queue": "satelite_descoberta"},
     "satelite.processar_cena_area": {"queue": "satelite_processamento"},
     "satelite.despachar_processamento_pendente": {"queue": "satelite_processamento"},
+    "analise_temporal.*": {"queue": "analise_temporal"},
 }
 
 celery_app.conf.beat_schedule = {
@@ -55,6 +56,10 @@ celery_app.conf.beat_schedule = {
         "task": "satelite.despachar_processamento_pendente",
         "schedule": crontab(minute=0, hour="*/6"),
     },
+    "analise-temporal-despachar-tendencias": {
+        "task": "analise_temporal.despachar_tendencias",
+        "schedule": crontab(day_of_week=1, hour=6, minute=30),
+    },
 }
 
 
@@ -68,6 +73,10 @@ def health_check() -> dict[str, str]:
 # ANTES de quality.representatividade: esse modulo aciona o fallback NASA
 # POWER e importa `app.ingestion.nasa_power` — se essa ordem for invertida,
 # vira import circular (nasa_power tambem precisa de `celery_app` daqui).
+# Pelo mesmo motivo, analysis.vegetacao precisa vir ANTES de
+# ingestion.sentinel2: sentinel2.py importa calcular_tendencia_area dele
+# para o despacho encadeado ao fim de processar_cena_area.
+from app.analysis import vegetacao as _analise_vegetacao_tasks  # noqa: E402,F401
 from app.ingestion import inmet as _inmet_tasks  # noqa: E402,F401
 from app.ingestion import nasa_power as _nasa_power_tasks  # noqa: E402,F401
 from app.ingestion import sentinel2 as _sentinel2_tasks  # noqa: E402,F401
