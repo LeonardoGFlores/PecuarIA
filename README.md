@@ -12,14 +12,16 @@ produto e a arquitetura estão em [`docs/specs/`](docs/specs/):
 - [`02-processamento-ndvi-evi.md`](docs/specs/02-processamento-ndvi-evi.md) — pipeline Sentinel-2 L2A.
 - [`03-motor-diagnostico-gargalos.md`](docs/specs/03-motor-diagnostico-gargalos.md) — regras do motor de diagnóstico (Fase 6).
 - [`04-analise-temporal.md`](docs/specs/04-analise-temporal.md) — tendência, comparação sazonal e detecção de lacunas.
+- [`05-perfil-produtor-oferta-regional.md`](docs/specs/05-perfil-produtor-oferta-regional.md) — CRUD de perfil do produtor/equipe e oferta regional.
 
-Este repositório cobriu as Fases 1 a 4 do roadmap: cadastro territorial,
+Este repositório cobriu as Fases 1 a 5 do roadmap: cadastro territorial,
 catálogo de fontes, integração meteorológica (INMET + NASA POWER como
 fallback em grade, com avaliação de representatividade por variável),
-processamento de vegetação (NDVI/EVI via Sentinel-2 L2A) e análise temporal
+processamento de vegetação (NDVI/EVI via Sentinel-2 L2A), análise temporal
 (tendência/sazonalidade de vegetação + detecção de lacunas nas duas
-séries). As demais fases (perfil do produtor/oferta regional, diagnóstico,
-cenários) ainda não têm código além do schema — ver a spec que as guia.
+séries) e CRUD de perfil do produtor/equipe e oferta regional (fornecedor,
+oferta, logística). As demais fases (diagnóstico, cenários) ainda não têm
+código além do schema — ver a spec que as guia.
 
 **Nomes de campo da API do INMET não confirmados**: o ambiente onde a Fase 2
 foi implementada bloqueia acesso de rede a `apitempo.inmet.gov.br` e
@@ -127,10 +129,10 @@ npm install
 npm run dev
 ```
 
-Abre em `http://localhost:5173`. A tela de Mapa lê fazendas e áreas
-produtivas da API; as demais 7 telas prioritárias existem como rotas
-navegáveis, ainda sem funcionalidade (dependem de fases futuras — cada
-placeholder indica de qual fase depende).
+Abre em `http://localhost:5173`. Mapa, Perfil operacional e Oferta regional
+lêem e escrevem dados reais na API; as demais 5 telas prioritárias existem
+como rotas navegáveis, ainda sem funcionalidade (dependem de fases futuras
+— cada placeholder indica de qual fase depende).
 
 ## Endpoints de meteorologia (Fase 2)
 
@@ -168,6 +170,25 @@ placeholder indica de qual fase depende).
   — mesma detecção de lacunas para a série meteorológica resolvida (limiar
   `meteorologia_limiar_gap_dias`).
 
+## Endpoints de perfil e oferta regional (Fase 5)
+
+CRUD declarativo direto (sem worker envolvido — não há ingestão externa
+nesta camada).
+
+- `GET/POST/PUT/DELETE /fazendas/{fazenda_id}/perfil-produtor` e
+  `GET/POST/PUT/DELETE /fazendas/{fazenda_id}/equipe` — singleton por
+  fazenda (no máximo um registro de cada); `POST` quando já existe um
+  registro retorna 409 (usar `PUT` para atualizar).
+- `GET/POST /fontes/fornecedores` e `GET/PUT/DELETE
+  /fontes/fornecedores/{id}` — apagar um fornecedor cascateia para suas
+  ofertas e a logística de cada uma.
+- `GET /fontes/ofertas?fornecedor_id=`, `POST /fontes/ofertas` e
+  `GET/PUT/DELETE /fontes/ofertas/{id}` — o campo de leitura `vencida` é
+  calculado a partir de `validade_cotacao` e do relógio atual, nunca
+  persistido; uma oferta vencida nunca é apagada, só marcada não-elegível.
+- `GET/POST /fontes/ofertas/{oferta_id}/logistica` e `GET/PUT/DELETE
+  /fontes/logistica/{id}`.
+
 ## Testes
 
 ```bash
@@ -185,11 +206,17 @@ estiver acessível) e limpam os dados que criam ao final. Os de
 um `moto` local (`ThreadedMotoServer`) — nenhum COG real é baixado nem
 MinIO real é necessário para rodar a suíte.
 
-A API também tem sua própria suíte (por enquanto só lógica pura, sem
-banco):
+A API também tem sua própria suíte:
 
 ```bash
 cd apps/api
 source .venv/bin/activate
+export DATABASE_URL="postgresql+psycopg://pecuaria:pecuaria@localhost:5432/pecuaria"
 python -m pytest tests/ -v
 ```
+
+Os testes de lógica pura (`test_analise_temporal_lacunas.py`) não precisam
+de banco. Os de rotas (`test_routes_perfil.py`, `test_routes_fontes.py`,
+Fase 5) usam `TestClient` contra o Postgres local e são pulados
+automaticamente se `DATABASE_URL` não estiver acessível — mesma convenção
+da suíte de integração do worker.

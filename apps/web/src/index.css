@@ -120,3 +120,109 @@ body,
   color: #6b6b6b;
   font-style: italic;
 }
+
+.crud-page {
+  padding: 24px 32px 48px;
+  max-width: 960px;
+  overflow-y: auto;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  max-width: 320px;
+  margin: 16px 0;
+}
+
+.form-field select,
+.form-field input {
+  padding: 6px 8px;
+  font-size: 14px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px 20px;
+  margin: 16px 0 32px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.form-grid h2,
+.form-grid h3 {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #4a4a4a;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  padding: 6px 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.form-grid button {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.tabela-crud {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+.tabela-crud th,
+.tabela-crud td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tabela-crud button {
+  margin-right: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.linha-selecionada {
+  background: #eef6ec;
+}
+
+.badge-pendente {
+  font-size: 12px;
+  font-weight: 400;
+  font-style: italic;
+  color: #6b6b6b;
+}
+
+.badge-vencida {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  background: #fdecea;
+  color: #7f1d1d;
+}

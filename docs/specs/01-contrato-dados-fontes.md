@@ -116,11 +116,14 @@ tabelas existem para que o motor de cenários (Fase 7) compare exigência de man
 alternativa contra a capacidade aqui declarada — a comparação é feita no motor de cenários, não
 nesta camada.
 
+`perfil_produtor` e `equipe` são singleton por fazenda (no máximo uma linha de cada por
+`fazenda_id`) — ver doc 05 para a constraint e o CRUD.
+
 ## E. Oferta regional de animais, insumos e serviços
 
 | Tabela | Campos principais | Observações |
 |---|---|---|
-| `fornecedor` | `id`, `nome`, `tipo` (`animais`\|`insumos`\|`servicos`\|`frete`\|`comprador`), `regiao`, `contato` | |
+| `fornecedor` | `id`, `nome`, `tipo` (`animais`\|`insumos`\|`servicos`\|`frete`\|`comprador`), `regiao`, `contato`, `fonte` | `fonte` adicionado na Fase 5 para fechar o requisito P0 de rastreabilidade (linha 22-23) — ausente na migration original da Fase 1; sempre `"declarado_produtor"` nesta fase. |
 | `oferta_regional` | `id`, `fornecedor_id`, `categoria`, `especificacao`, `unidade`, `quantidade_disponivel`, `quantidade_minima`, `preco`, `condicoes`, `sazonalidade`, `data_registro`, `validade_cotacao`, `fonte` | Uma oferta com `validade_cotacao` vencida não é elegível para simulação de cenário (ver doc de cenários, fora do escopo desta entrega) — fica retida como histórico. |
 | `logistica_oferta` | `id`, `oferta_id`, `distancia_km`, `prazo_entrega_dias`, `custo_frete` | O custo relevante para cenários é o custo entregue na fazenda: `preco` + `custo_frete`, nunca `preco` isolado. |
 

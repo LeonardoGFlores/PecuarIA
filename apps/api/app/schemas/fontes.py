@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any
 
 from geojson_pydantic import Point
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.meteorologia import FonteEstacao, TipoEstacao
 from app.models.oferta import TipoFornecedor
@@ -41,6 +41,7 @@ class FornecedorCreate(BaseModel):
     tipo: TipoFornecedor
     regiao: str | None = None
     contato: str | None = None
+    fonte: str = "declarado_produtor"
 
 
 class FornecedorRead(BaseModel):
@@ -49,3 +50,52 @@ class FornecedorRead(BaseModel):
     tipo: TipoFornecedor
     regiao: str | None
     contato: str | None
+    fonte: str
+
+
+class OfertaRegionalCreate(BaseModel):
+    fornecedor_id: uuid.UUID
+    categoria: str
+    especificacao: str | None = None
+    unidade: str
+    quantidade_disponivel: float | None = Field(default=None, ge=0)
+    quantidade_minima: float | None = Field(default=None, ge=0)
+    preco: float | None = Field(default=None, ge=0)
+    condicoes: str | None = None
+    sazonalidade: str | None = None
+    data_registro: datetime
+    validade_cotacao: datetime | None = None
+    fonte: str
+
+
+class OfertaRegionalRead(BaseModel):
+    id: uuid.UUID
+    fornecedor_id: uuid.UUID
+    categoria: str
+    especificacao: str | None
+    unidade: str
+    quantidade_disponivel: float | None
+    quantidade_minima: float | None
+    preco: float | None
+    condicoes: str | None
+    sazonalidade: str | None
+    data_registro: datetime
+    validade_cotacao: datetime | None
+    fonte: str
+    # Calculado na leitura a partir do relogio atual, nunca persistido — mesmo
+    # padrao do campo `redundante` em IndiceVegetacaoRead (Fase 3).
+    vencida: bool
+
+
+class LogisticaOfertaCreate(BaseModel):
+    distancia_km: float | None = Field(default=None, ge=0)
+    prazo_entrega_dias: int | None = Field(default=None, ge=0)
+    custo_frete: float | None = Field(default=None, ge=0)
+
+
+class LogisticaOfertaRead(BaseModel):
+    id: uuid.UUID
+    oferta_id: uuid.UUID
+    distancia_km: float | None
+    prazo_entrega_dias: int | None
+    custo_frete: float | None

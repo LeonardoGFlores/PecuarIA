@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Enum, ForeignKey, Numeric, String
+from sqlalchemy import Enum, ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -23,6 +23,7 @@ class ApoioTecnico(str, enum.Enum):
 
 class PerfilProdutor(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "perfil_produtor"
+    __table_args__ = (UniqueConstraint("fazenda_id", name="uq_perfil_produtor_fazenda_id"),)
 
     fazenda_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("fazenda.id", ondelete="CASCADE"), nullable=False
@@ -39,6 +40,7 @@ class PerfilProdutor(UUIDPrimaryKeyMixin, Base):
 
 class Equipe(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "equipe"
+    __table_args__ = (UniqueConstraint("fazenda_id", name="uq_equipe_fazenda_id"),)
 
     fazenda_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("fazenda.id", ondelete="CASCADE"), nullable=False

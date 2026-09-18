@@ -25,6 +25,9 @@ class Fornecedor(UUIDPrimaryKeyMixin, Base):
     tipo: Mapped[TipoFornecedor] = mapped_column(Enum(TipoFornecedor, name="tipo_fornecedor"), nullable=False)
     regiao: Mapped[str | None] = mapped_column(String(200), nullable=True)
     contato: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    # Sempre "declarado_produtor": fornecedor e sempre cadastrado manualmente, nunca
+    # ingerido de uma fonte externa automatizada (ver docs/specs/05, "Lacuna fechada").
+    fonte: Mapped[str] = mapped_column(String(120), nullable=False, default="declarado_produtor")
 
     ofertas: Mapped[list["OfertaRegional"]] = relationship(
         back_populates="fornecedor", cascade="all, delete-orphan"
