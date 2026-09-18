@@ -1,0 +1,29 @@
+[project]
+name = "pecuaria-worker-geo"
+version = "0.1.0"
+description = "Worker de processamento geoespacial da PecuarIA (Celery). Fase 1: apenas skeleton; ndvi/evi/masks chegam na Fase 3 (docs/specs/02)."
+requires-python = ">=3.11"
+dependencies = [
+    "celery[redis]>=5.4,<6.0",
+    "pydantic-settings>=2.3,<3.0",
+    "sqlalchemy>=2.0,<3.0",
+    "psycopg[binary]>=3.1,<4.0",
+    "httpx>=0.27,<1.0",
+    "rasterio>=1.3,<2.0",
+    "shapely>=2.0,<3.0",
+    "numpy>=1.26,<2.0",
+    "boto3>=1.34,<2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9.0",
+    "moto[s3,server]>=5.0,<6.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]

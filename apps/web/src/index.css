@@ -1,0 +1,228 @@
+:root {
+  --text: #2b2b2b;
+  --text-h: #08060d;
+  --bg: #ffffff;
+  --border: #e0e0e0;
+  --accent: #2e7d32;
+  --nav-bg: #1b2b1e;
+  --nav-text: #f1f5ee;
+
+  font: 16px/145% system-ui, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 12px 20px;
+  background: var(--nav-bg);
+  color: var(--nav-text);
+  flex-wrap: wrap;
+}
+
+.app-title {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+}
+
+.app-nav {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.nav-link {
+  color: var(--nav-text);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.nav-link:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-link-active {
+  opacity: 1;
+  background: var(--accent);
+}
+
+.app-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mapa-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.mapa-container {
+  flex: 1;
+  min-height: 0;
+}
+
+.banner-erro {
+  background: #fdecea;
+  color: #7f1d1d;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+.banner-info {
+  background: #eef6ec;
+  color: #1b2b1e;
+  padding: 10px 16px;
+  font-size: 14px;
+}
+
+.placeholder-page {
+  padding: 40px;
+  max-width: 640px;
+}
+
+.placeholder-page h1 {
+  margin: 0 0 12px;
+  font-size: 28px;
+}
+
+.placeholder-fase {
+  margin-top: 16px;
+  font-size: 13px;
+  color: #6b6b6b;
+  font-style: italic;
+}
+
+.crud-page {
+  padding: 24px 32px 48px;
+  max-width: 960px;
+  overflow-y: auto;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  max-width: 320px;
+  margin: 16px 0;
+}
+
+.form-field select,
+.form-field input {
+  padding: 6px 8px;
+  font-size: 14px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px 20px;
+  margin: 16px 0 32px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.form-grid h2,
+.form-grid h3 {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #4a4a4a;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea {
+  padding: 6px 8px;
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.form-grid button {
+  grid-column: 1 / -1;
+  justify-self: start;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.tabela-crud {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+.tabela-crud th,
+.tabela-crud td {
+  text-align: left;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tabela-crud button {
+  margin-right: 6px;
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.linha-selecionada {
+  background: #eef6ec;
+}
+
+.badge-pendente {
+  font-size: 12px;
+  font-weight: 400;
+  font-style: italic;
+  color: #6b6b6b;
+}
+
+.badge-vencida {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  background: #fdecea;
+  color: #7f1d1d;
+}

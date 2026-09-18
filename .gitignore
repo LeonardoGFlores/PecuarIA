@@ -1,2 +1,17 @@
 node_modules/
 .env
+infra/.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Node / build
+dist/
+.vite/
+
+# Editores/SO
+.DS_Store
